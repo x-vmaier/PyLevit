@@ -8,7 +8,7 @@ class SidebarFrame(BaseFrame):
     def __init__(self, master, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
 
-        self.serial = sercom.Serial().get_instance()
+        self.serial = sercom.Serial.get_instance()
 
         self.appearance_modes = ["Light", "Dark", "System"]
         self.ui_scalings = ["80%", "90%", "100%", "110%", "120%"]
@@ -56,7 +56,13 @@ class SidebarFrame(BaseFrame):
 
     def on_serial_option_menu_click(self, event):
         """Change text to connect or disconnect based on the serial connection"""
-        pass
+        selected_port = self.serial_option_menu.get()
+        if selected_port != self.serial.port:
+            self.connect_button.configure(text="Connect")
+            self.baud_option_menu.configure(state="normal")
+        else:
+            self.connect_button.configure(text="Disconnect")
+            self.baud_option_menu.configure(state="disabled")
 
     def get_available_ports(self):
         """Get available serial ports."""
@@ -79,4 +85,8 @@ class SidebarFrame(BaseFrame):
 
     def connect_to_port(self):
         """Connect to serial port."""
-        pass
+        port = self.serial_option_menu.get()
+        baud = self.baud_option_menu.get()
+
+        self.serial.connect(port, baud)
+        self.baud_option_menu.configure(state="disabled")

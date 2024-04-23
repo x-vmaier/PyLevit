@@ -1,12 +1,17 @@
 import tkinter
 import customtkinter
 from frames.base_frame import BaseFrame
+from event_bus import EventBus
 import widgets
+import sercom
 
 
 class SettingsFrame(BaseFrame):
     def __init__(self, master, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
+
+        self.serial = sercom.Serial.get_instance()
+        self.event_bus = EventBus()
 
         self.realtime_enabled = tkinter.BooleanVar()
 
