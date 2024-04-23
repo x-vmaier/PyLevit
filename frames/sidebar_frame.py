@@ -2,7 +2,7 @@ import customtkinter
 from frames.base_frame import BaseFrame
 
 
-class Sidebar(BaseFrame):
+class SidebarFrame(BaseFrame):
     """Sidebar class representing the sidebar menu."""
     def __init__(self, master, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
