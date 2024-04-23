@@ -8,7 +8,6 @@ class SettingsFrame(BaseFrame):
     def __init__(self, master, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
 
-        self.selected_port = tkinter.StringVar()
         self.realtime_enabled = tkinter.BooleanVar()
 
         self.grid_rowconfigure(5, weight=1)
