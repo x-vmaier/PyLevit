@@ -1,4 +1,5 @@
 import serial
+import asyncio
 import sercom.reader
 
 class Serial():
@@ -24,9 +25,7 @@ class Serial():
     async def connect(self, port: str, baud: int):
         """Connects to the specified serial port at the given baud rate."""
         try:
-            # Close any existing connection first
             await self.disconnect()
-            # Open new serial port
             self.port = port
             self.baud = baud
             self.serial = serial.Serial(port=port, baudrate=baud)
@@ -35,16 +34,15 @@ class Serial():
         except serial.SerialException as e:
             print('Error opening port ' + port + '. Is it in use?')
             raise e
-
-        print(f"Connected to {self.port}")
-        return True
     
     async def disconnect(self):
-        if self.serial is None and not self.serial.is_open:
+        if self.serial is None:
             return
         
-        await self.reader.stop()
-        self.serial = None
+        if self.serial.is_open:
+            self.reader.stop()
+            self.serial.close()
+            self.serial = None
 
     def is_connected(self):
         return self.serial is not None and self.serial.is_open

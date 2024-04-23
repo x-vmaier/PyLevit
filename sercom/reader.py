@@ -2,7 +2,6 @@ import time
 import queue
 import serial
 import threading
-
 import sercom.packet as pkt
 from sercom.packet import PacketType
 from event_bus import EventBus
@@ -14,13 +13,19 @@ class Reader():
 
     def start(self, serial: serial.Serial):
         """Start the serial thread."""
-        self.stop()
-        if serial is not None and serial.is_open:
-            serial.close()
-        serial.flushInput()
+        try:
+            self.stop()
+            serial.flushInput()
+        except Exception as e:
+            print('Failed to stop previouse reader thread')
+            raise e
 
-        self.serial_thread = SerialReaderThread(serial, self.data_queues)
-        self.serial_thread.start()
+        try:
+            self.serial_thread = SerialReaderThread(serial, self.data_queues)
+            self.serial_thread.start()
+        except Exception as e:
+            print('Failed to start reader thread')
+            raise e
 
     def stop(self):
         """Stop the serial thread."""
@@ -28,7 +33,7 @@ class Reader():
             self.serial_thread.stop()
             self.serial_thread.join()
 
-    def add_data_queue(self, data_queue: queue.Queue, identifier: int):
+    def add_data_queue(self, identifier: int, data_queue: queue.Queue):
         self.data_queues[identifier] = data_queue
 
 

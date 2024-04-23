@@ -1,3 +1,4 @@
+import asyncio
 import customtkinter
 from frames.base_frame import BaseFrame
 import sercom
@@ -14,6 +15,8 @@ class SidebarFrame(BaseFrame):
         self.ui_scalings = ["80%", "90%", "100%", "110%", "120%"]
         self.available_ports = sercom.get_available_ports()
         self.baudrates = ["115200", "9600"]
+        self.connect_button_text = "Connect"
+        self.baud_option_menu_state = "normal"
 
         self.grid_rowconfigure(5, weight=1)
         self.init_widgets()
@@ -30,7 +33,7 @@ class SidebarFrame(BaseFrame):
         self.serial_option_menu.grid(row=2, column=0, padx=20, pady=(0, 10))
         self.baud_option_menu = customtkinter.CTkOptionMenu(self, dynamic_resizing=False, values=self.baudrates)
         self.baud_option_menu.grid(row=3, column=0, padx=20, pady=(0, 10))
-        self.connect_button = customtkinter.CTkButton(self, text="Connect", command=self.connect_to_port)
+        self.connect_button = customtkinter.CTkButton(self, text=self.connect_button_text, command=self.connect_to_port)
         self.connect_button.grid(row=4, column=0, padx=20, pady=(30, 0))
         self.appearance_mode_label = customtkinter.CTkLabel(self, text="Appearance Mode:", anchor="w")
         self.appearance_mode_label.grid(row=6, column=0, padx=20, pady=(10, 0))
@@ -58,11 +61,16 @@ class SidebarFrame(BaseFrame):
         """Change text to connect or disconnect based on the serial connection"""
         selected_port = self.serial_option_menu.get()
         if selected_port != self.serial.port:
-            self.connect_button.configure(text="Connect")
-            self.baud_option_menu.configure(state="normal")
+            self.connect_button_text = "Connect"
+            self.baud_option_menu_state = "normal"
         else:
-            self.connect_button.configure(text="Disconnect")
-            self.baud_option_menu.configure(state="disabled")
+            self.baud_option_menu_state = "disabled"
+            self.connect_button_text = "Disconnect"
+        self.update_state()
+
+    def update_state(self):
+        self.baud_option_menu.configure(state=self.baud_option_menu_state)
+        self.connect_button.configure(text=self.connect_button_text)
 
     def get_available_ports(self):
         """Get available serial ports."""
@@ -85,8 +93,19 @@ class SidebarFrame(BaseFrame):
 
     def connect_to_port(self):
         """Connect to serial port."""
-        port = self.serial_option_menu.get()
-        baud = self.baud_option_menu.get()
+        if self.connect_button_text == "Connect":
+            port = self.serial_option_menu.get()
+            baud = self.baud_option_menu.get()
 
-        self.serial.connect(port, baud)
-        self.baud_option_menu.configure(state="disabled")
+            try:
+                asyncio.run(self.serial.connect(port, baud))
+                self.baud_option_menu_state = "disabled"
+                self.connect_button_text = "Disconnect"
+            except Exception as e:
+                print(f"Failed to connect: {e}")
+        elif self.connect_button_text == "Disconnect":
+            self.serial.disconnect()
+            self.connect_button_text = "Connect"
+            self.baud_option_menu_state = "normal"
+
+        self.update_state()

@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from scipy.interpolate import interp1d
 from frames.base_frame import BaseFrame
+from sercom.packet import PacketType
 import sercom
 
 
@@ -12,7 +13,8 @@ class ChartFrame(BaseFrame):
         super().__init__(master, *args, **kwargs)
 
         self.serial = sercom.Serial.get_instance()
-        self.data_queue = queue.Queue()
+        self.hall_queue = queue.Queue()
+        self.serial.reader.add_data_queue(PacketType.HALL_UPDATE, self.hall_queue)
 
         self.master = master
         self.init_widgets()
@@ -57,8 +59,8 @@ class ChartFrame(BaseFrame):
 
     def update_chart_from_queue(self):
         """Update chart from data queue."""
-        while not self.data_queue.empty():
-            new_x, new_y = self.data_queue.get()
+        while not self.hall_queue.empty():
+            new_x, new_y = self.hall_queue.get()
             # Add new data points
             self.x_data.append(new_x)
             self.y_data.append(new_y)
