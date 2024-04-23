@@ -1,6 +1,6 @@
 import serial
-import asyncio
 import sercom.reader
+
 
 class Serial():
     _instance = None
@@ -34,15 +34,22 @@ class Serial():
         except serial.SerialException as e:
             print('Error opening port ' + port + '. Is it in use?')
             raise e
+        except Exception as e:
+            print('An error occurred while connecting to the serial port.')
+            raise e
     
     async def disconnect(self):
         if self.serial is None:
             return
         
         if self.serial.is_open:
-            self.reader.stop()
-            self.serial.close()
-            self.serial = None
+            try:
+                self.reader.stop()
+                self.serial.close()
+                self.serial = None
+            except Exception as e:
+                print('An error occurred while disconnecting from the serial port.')
+                raise e
 
     def is_connected(self):
         return self.serial is not None and self.serial.is_open

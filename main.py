@@ -1,3 +1,4 @@
+import asyncio
 import customtkinter
 import frames
 import sercom
@@ -46,7 +47,7 @@ class App(customtkinter.CTk):
         self.status_frame.grid(row=2, column=1, columnspan=2, padx=10, pady=(5, 10), sticky="nsew")
 
     def on_close(self):
-        self.serial.disconnect()
+        asyncio.run(self.serial.disconnect())
         self.destroy()
 
 

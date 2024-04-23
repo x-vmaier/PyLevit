@@ -6,6 +6,7 @@ import sercom.packet as pkt
 from sercom.packet import PacketType
 from event_bus import EventBus
 
+
 class Reader():
     def __init__(self):
         self.serial_thread = None
@@ -13,12 +14,8 @@ class Reader():
 
     def start(self, serial: serial.Serial):
         """Start the serial thread."""
-        try:
-            self.stop()
-            serial.flushInput()
-        except Exception as e:
-            print('Failed to stop previouse reader thread')
-            raise e
+        self.stop()
+        serial.flushInput()
 
         try:
             self.serial_thread = SerialReaderThread(serial, self.data_queues)
@@ -29,9 +26,13 @@ class Reader():
 
     def stop(self):
         """Stop the serial thread."""
-        if self.serial_thread and self.serial_thread.is_alive():
-            self.serial_thread.stop()
-            self.serial_thread.join()
+        try:
+            if self.serial_thread and self.serial_thread.is_alive():
+                self.serial_thread.stop()
+                self.serial_thread.join()
+        except Exception as e:
+            print('Failed to stop previous reader thread')
+            raise e
 
     def add_data_queue(self, identifier: int, data_queue: queue.Queue):
         self.data_queues[identifier] = data_queue
@@ -59,26 +60,32 @@ class SerialReaderThread(threading.Thread):
 
     def run(self):
         """Run the thread."""
-        while not self.stopped() and self.serial.is_open and self.serial is not None:
-            try:
-                packet = pkt.receive(self.serial)
-                if not packet:
-                    continue
+        try:
+            while not self.stopped() and self.serial.is_open and self.serial is not None:
+                try:
+                    packet = pkt.receive(self.serial)
+                    if not packet:
+                        continue
 
-                id, data = packet
-                id = int(id)
-                data = float(data)
+                    id, data = packet
+                    id = int(id)
+                    data = float(data)
 
-                for queue in self.data_queues.values():
-                    # Put data into all queues that are interested in this ID
-                    if id in self.data_queues.keys():
-                        queue.put((time.time(), data))
-                
-                # Update non chart data
-                if id != PacketType.HALL_UPDATE:
-                    event_data = {'id': id, 'data': data}
-                    self.event_bus.publish('update', event_data)
+                    for queue in self.data_queues.values():
+                        # Put data into all queues that are interested in this ID
+                        for key in self.data_queues.keys():
+                            if id == key.value:
+                                queue.put((time.time(), data))
+                    
+                    # Update non chart data
+                    if id != PacketType.HALL_UPDATE:
+                        event_data = {'id': id, 'data': data}
+                        self.event_bus.publish('update', event_data)
 
-                time.sleep(0.001)
-            except:
-                pass
+                    time.sleep(0.001)
+                except Exception as e:
+                    print('An error occurred while reading from the serial port.')
+                    raise e
+        except Exception as e:
+            print('An error occurred while running the serial reader thread.')
+            raise e
