@@ -1,5 +1,6 @@
 import customtkinter
 import frames
+import sercom
 
 TITLE = "PyLevit"
 WINDOW_WIDTH = 1100
@@ -10,10 +11,12 @@ class App(customtkinter.CTk):
     """Main application class."""
     def __init__(self):
         super().__init__()
+        self.serial = sercom.Serial.get_instance()
         self.initialize_interface()
 
     def initialize_interface(self):
         self.title(TITLE)
+        self.protocol("WM_DELETE_WINDOW", self.on_close)
         self.center_window(WINDOW_WIDTH, WINDOW_HEIGHT)
         self.configure_layout()
         self.create_frames()
@@ -41,6 +44,10 @@ class App(customtkinter.CTk):
         self.settings_frame.grid(row=0, column=2, rowspan=2, padx=(5, 10), pady=(10, 5), sticky="nsew")
         self.status_frame = frames.StatusBarFrame(self)
         self.status_frame.grid(row=2, column=1, columnspan=2, padx=10, pady=(5, 10), sticky="nsew")
+
+    def on_close(self):
+        self.serial.disconnect()
+        self.destroy()
 
 
 if __name__ == "__main__":
