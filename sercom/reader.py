@@ -71,11 +71,12 @@ class SerialReaderThread(threading.Thread):
                     id = int(id)
                     data = float(data)
 
-                    for queue in self.data_queues.values():
+                    for _id, queue in self.data_queues.items():
                         # Put data into all queues that are interested in this ID
-                        for key in self.data_queues.keys():
-                            if id == key.value:
-                                queue.put((time.time(), data))
+                        if _id == PacketType.HALL_UPDATE.value and id == PacketType.HALL_UPDATE.value:
+                            queue.put((time.time(), data))
+                        else:
+                            queue.put(data)
                     
                     # Update non chart data
                     if id != PacketType.HALL_UPDATE:

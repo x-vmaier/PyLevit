@@ -14,7 +14,9 @@ class ChartFrame(BaseFrame):
 
         self.serial = sercom.Serial.get_instance()
         self.hall_queue = queue.Queue()
+        self.setpoint = queue.Queue()
         self.serial.reader.add_data_queue(PacketType.HALL_UPDATE, self.hall_queue)
+        self.serial.reader.add_data_queue(PacketType.SETPOINT_UPDATE, self.setpoint)
 
         self.master = master
         self.init_widgets()
