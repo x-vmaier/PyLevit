@@ -10,6 +10,7 @@ class SidebarFrame(BaseFrame):
         self.appearance_modes = ["Light", "Dark", "System"]
         self.ui_scalings = ["80%", "90%", "100%", "110%", "120%"]
         self.available_ports = ["COM3"]
+        self.baudrates = ["115200", "9600"]
 
         self.grid_rowconfigure(5, weight=1)
         self.init_widgets()
@@ -22,7 +23,7 @@ class SidebarFrame(BaseFrame):
         self.serial_label.grid(row=1, column=0, padx=20, pady=(25, 10))
         self.serial_option_menu = customtkinter.CTkOptionMenu(self, dynamic_resizing=False, values=self.available_ports, command=self.on_serial_option_menu_click)
         self.serial_option_menu.grid(row=2, column=0, padx=20, pady=(0, 10))
-        self.baud_option_menu = customtkinter.CTkOptionMenu(self, dynamic_resizing=False, values=["115200", "9600"])
+        self.baud_option_menu = customtkinter.CTkOptionMenu(self, dynamic_resizing=False, values=self.baudrates)
         self.baud_option_menu.grid(row=3, column=0, padx=20, pady=(0, 10))
         self.connect_button = customtkinter.CTkButton(self, text="Connect", command=self.connect_to_port)
         self.connect_button.grid(row=4, column=0, padx=20, pady=(30, 0))
