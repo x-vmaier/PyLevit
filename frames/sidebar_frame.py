@@ -1,5 +1,6 @@
 import customtkinter
 from frames.base_frame import BaseFrame
+import sercom
 
 
 class SidebarFrame(BaseFrame):
@@ -7,14 +8,18 @@ class SidebarFrame(BaseFrame):
     def __init__(self, master, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
 
+        self.serial = sercom.Serial().get_instance()
+
         self.appearance_modes = ["Light", "Dark", "System"]
         self.ui_scalings = ["80%", "90%", "100%", "110%", "120%"]
-        self.available_ports = ["COM3"]
+        self.available_ports = sercom.get_available_ports()
         self.baudrates = ["115200", "9600"]
 
         self.grid_rowconfigure(5, weight=1)
         self.init_widgets()
         self.set_defaults()
+
+        self.get_available_ports()
 
     def init_widgets(self):
         self.logo_label = customtkinter.CTkLabel(self, text="Levitator", font=customtkinter.CTkFont(size=20, weight="bold"))
@@ -52,6 +57,25 @@ class SidebarFrame(BaseFrame):
     def on_serial_option_menu_click(self, event):
         """Change text to connect or disconnect based on the serial connection"""
         pass
+
+    def get_available_ports(self):
+        """Get available serial ports."""
+        self.update_available_ports()
+        self.after(1000, self.get_available_ports)
+
+    def update_available_ports(self):
+        """Update available serial ports."""
+        prev = self.available_ports
+        self.available_ports = sercom.get_available_ports()
+
+        # Only update the option menu if something changed
+        if self.available_ports != prev:
+            self.serial_option_menu.configure(values=self.available_ports)
+
+        # If selected port isnt available, set option to the first available port
+        if self.serial_option_menu.get() not in self.available_ports:
+            self.serial.disconnect()
+            self.serial_option_menu.set(self.available_ports[0])
 
     def connect_to_port(self):
         """Connect to serial port."""
