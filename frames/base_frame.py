@@ -10,6 +10,3 @@ class BaseFrame(customtkinter.CTkFrame):
     
     def set_defaults(self):
         raise NotImplementedError("Subclasses must implement set_defaults method")
-    
-    def bind_events(self):
-        raise NotImplementedError("Subclasses must implement bind_events method")
