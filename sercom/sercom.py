@@ -53,7 +53,7 @@ class Serial:
 
     async def start(self, serial: serial.Serial):
         """Start the serial thread."""
-        self.stop()
+        await self.stop()
         serial.flushInput()
 
         try:
