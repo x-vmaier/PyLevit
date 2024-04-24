@@ -9,9 +9,24 @@ HALL_UPDATE = 5
 PWM_UPDATE = 6
 
 PACKET_FORMAT = '<BBBBB'
-START_DELIMITER = '['
-SEPARATOR = ':'
-STOP_DELIMITER = ']'
+START_DELIMITER = b'['
+END_DELIMITER = b']'
+SEPARATOR = b':'
+
+def decode_packet(packet):
+    """Decode packet from byte string."""
+    try:
+        identifier_bytes = packet[1:3]
+        data_bytes = packet[4:6]
+
+        # Decode bytes to integers
+        identifier = int.from_bytes(identifier_bytes, byteorder='little')
+        data = int.from_bytes(data_bytes, byteorder='little')
+
+        return identifier, data
+    except Exception as e:
+        print(f"Error occurred while decoding packet: {e}")
+        return None, None, None, None, None
 
 async def send(serial, identifier, data):
     """Send packet to serial port."""
@@ -23,7 +38,7 @@ async def send(serial, identifier, data):
             continue
         
         print("Sending {}".format(identifier))
-        packet = struct.pack(PACKET_FORMAT, ord(START_DELIMITER), identifier, ord(SEPARATOR), data, ord(STOP_DELIMITER))
+        packet = struct.pack(PACKET_FORMAT, ord(START_DELIMITER), identifier, ord(SEPARATOR), data, ord(END_DELIMITER))
         serial.write(packet)
     except Exception as e:
         print(f"Error occurred while sending packet: {e}")
@@ -31,16 +46,19 @@ async def send(serial, identifier, data):
 def receive(serial):
     """Receive packet from serial port."""
     try:
-        while serial.in_waiting < struct.calcsize(PACKET_FORMAT):
-            pass
-        
-        packet_data = serial.read(struct.calcsize(PACKET_FORMAT))
-        start_delimiter, identifier, separator, data, end_delimiter = struct.unpack(PACKET_FORMAT, packet_data)
-        
-        if start_delimiter == ord(START_DELIMITER) and separator == ord(SEPARATOR) and end_delimiter == ord(STOP_DELIMITER):
-            return identifier, data
-        else:
+        start_delimiter = serial.read()
+        if start_delimiter != START_DELIMITER:
             return None, None
+        
+        packet_data = serial.read_until(END_DELIMITER)
+        packet = start_delimiter + packet_data
+        end_delimiter = packet_data[-1:]
+        
+        if end_delimiter != END_DELIMITER:
+            return None, None
+        
+        return decode_packet(packet)
+            
     except Exception as e:
         print(f"Error occurred while receiving packet: {e}")
         return None, None
