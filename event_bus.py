@@ -6,7 +6,7 @@ class EventBus:
             cls._instance = super().__new__(cls)
             cls._instance.subscribers = {}
         return cls._instance
-
+    
     def subscribe(self, event_type, callback):
         if event_type not in self.subscribers:
             self.subscribers[event_type] = []
@@ -19,4 +19,7 @@ class EventBus:
     def publish(self, event_type, data=None):
         if event_type in self.subscribers:
             for callback in self.subscribers[event_type]:
-                callback(data)
+                if data is not None:
+                    callback(data=data)
+                else:
+                    callback()

@@ -1,18 +1,27 @@
 import asyncio
 import customtkinter
+from event_bus import EventBus
+from config import Config
 import frames
 import sercom
 
 TITLE = "PyLevit"
 WINDOW_WIDTH = 1100
 WINDOW_HEIGHT = 580
+MAJOR = 0
+MINOR = 1
+PATCH = 6
 
 
 class App(customtkinter.CTk):
     """Main application class."""
     def __init__(self):
         super().__init__()
-        self.serial = sercom.Serial.get_instance()
+        self.serial = sercom.Serial()
+        self.event_bus = EventBus()
+        self.m_config = Config()
+
+        self.m_config.set_config("version", "{}.{}.{}".format(MAJOR, MINOR, PATCH))
         self.initialize_interface()
 
     def initialize_interface(self):
@@ -25,8 +34,8 @@ class App(customtkinter.CTk):
     def center_window(self, width, height):
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
-        x = (screen_width - width)
-        y = (screen_height - height)
+        x = (screen_width - width) // 2
+        y = (screen_height - height) // 2
         self.geometry(f"{width}x{height}+{x}+{y}")
 
     def configure_layout(self):
@@ -48,6 +57,7 @@ class App(customtkinter.CTk):
 
     def on_close(self):
         asyncio.run(self.serial.disconnect())
+        self.event_bus.publish("WM_DELETE_WINDOW")
         self.destroy()
 
 

@@ -1,1 +1,6 @@
+matplotlib
+numpy
+scipy
+pyserial
+tk
 customtkinter
