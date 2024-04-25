@@ -9,8 +9,8 @@ TITLE = "PyLevit"
 WINDOW_WIDTH = 1100
 WINDOW_HEIGHT = 580
 MAJOR = 0
-MINOR = 1
-PATCH = 6
+MINOR = 2
+PATCH = 1
 
 
 class App(customtkinter.CTk):
@@ -21,7 +21,7 @@ class App(customtkinter.CTk):
         self.event_bus = EventBus()
         self.m_config = Config()
 
-        self.m_config.set_config("version", "{}.{}.{}".format(MAJOR, MINOR, PATCH))
+        self.m_config.set_config("version", f"{MAJOR}.{MINOR}.{PATCH}")
         self.initialize_interface()
 
     def initialize_interface(self):
@@ -58,7 +58,7 @@ class App(customtkinter.CTk):
     def on_close(self):
         asyncio.run(self.serial.disconnect())
         self.event_bus.publish("WM_DELETE_WINDOW")
-        self.destroy()
+        self.after(1100, self.destroy())
 
 
 if __name__ == "__main__":
