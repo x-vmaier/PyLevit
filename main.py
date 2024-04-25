@@ -10,7 +10,7 @@ WINDOW_WIDTH = 1100
 WINDOW_HEIGHT = 580
 MAJOR = 0
 MINOR = 2
-PATCH = 1
+PATCH = 2
 
 
 class App(customtkinter.CTk):
