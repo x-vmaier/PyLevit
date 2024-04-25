@@ -1,6 +1,6 @@
+customtkinter
 matplotlib
 numpy
-scipy
 pyserial
+scipy
 tk
-customtkinter
