@@ -5,7 +5,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from scipy.interpolate import interp1d
 from frames.base_frame import BaseFrame
 from event_bus import EventBus
-import sercom.packet as packet
+import sercom.fastprotoc as fastprotoc
 from config import Config
 import sercom
 
@@ -21,8 +21,8 @@ class ChartFrame(BaseFrame):
         self.after_ids = []
         self.hall_queue = queue.Queue()
         self.pwm_queue = queue.Queue()
-        self.serial.add_data_queue(packet.HALL_UPDATE, self.hall_queue)
-        self.serial.add_data_queue(packet.PWM_UPDATE, self.pwm_queue)
+        self.serial.add_data_queue(fastprotoc.HALL_UPDATE, self.hall_queue)
+        self.serial.add_data_queue(fastprotoc.PWM_UPDATE, self.pwm_queue)
 
         self.padding = 15
         self.prev_padding_value = 0
@@ -38,7 +38,7 @@ class ChartFrame(BaseFrame):
         self.init_widgets()
         self.set_defaults()
 
-        self.event_bus.subscribe(packet.SETPOINT_UPDATE, self.setpoint_update_callback)
+        self.event_bus.subscribe(fastprotoc.SETPOINT_UPDATE, self.setpoint_update_callback)
         self.event_bus.subscribe("WM_DELETE_WINDOW", self.window_close_callback)
         self.after_ids.append(self.after(100, self.update_chart_from_queue))
 

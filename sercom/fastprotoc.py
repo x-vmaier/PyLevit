@@ -8,25 +8,22 @@ KD_UPDATE = 4
 HALL_UPDATE = 5
 PWM_UPDATE = 6
 
-PACKET_FORMAT = '<BBBBB'
-START_DELIMITER = b'['
-END_DELIMITER = b']'
+PACKET_FORMAT = '<BBBfB'
+START_DELIMITER = b'{'
+END_DELIMITER = b'}'
 SEPARATOR = b':'
 
 def decode_packet(packet):
     """Decode packet from byte string."""
     try:
-        identifier_bytes = packet[1:3]
-        data_bytes = packet[4:6]
+        if len(packet) != struct.calcsize(PACKET_FORMAT):
+            raise ValueError("Invalid packet length")
 
-        # Decode bytes to integers
-        identifier = int.from_bytes(identifier_bytes, byteorder='little')
-        data = int.from_bytes(data_bytes, byteorder='little')
-
+        _, identifier, _, data, _ = struct.unpack(PACKET_FORMAT, packet)
         return identifier, data
     except Exception as e:
         print(f"Error occurred while decoding packet: {e}")
-        return None, None, None, None, None
+        return None, None
 
 async def send(serial, identifier, data):
     """Send packet to serial port."""
@@ -38,7 +35,7 @@ async def send(serial, identifier, data):
             continue
         
         print("Sending {}".format(identifier))
-        packet = struct.pack(PACKET_FORMAT, ord(START_DELIMITER), identifier, ord(SEPARATOR), data, ord(END_DELIMITER))
+        packet = struct.pack(PACKET_FORMAT, ord(START_DELIMITER), identifier, data, ord(END_DELIMITER))
         serial.write(packet)
     except Exception as e:
         print(f"Error occurred while sending packet: {e}")
@@ -57,7 +54,8 @@ def receive(serial):
         if end_delimiter != END_DELIMITER:
             return None, None
         
-        return decode_packet(packet)
+        decoded_packet = decode_packet(packet)
+        return decoded_packet
             
     except Exception as e:
         print(f"Error occurred while receiving packet: {e}")

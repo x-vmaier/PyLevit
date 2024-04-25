@@ -1,6 +1,6 @@
 import tkinter
 from frames.base_frame import BaseFrame
-import sercom.packet as packet
+import sercom.fastprotoc as fastprotoc
 from event_bus import EventBus
 from config import Config
 import widgets
@@ -24,7 +24,7 @@ class StatusBarFrame(BaseFrame):
         self.init_widgets()
         self.set_defaults()
 
-        self.event_bus.subscribe(packet.CONNECTION_UPDATE, self.connection_state_update_callback)
+        self.event_bus.subscribe(fastprotoc.CONNECTION_UPDATE, self.connection_state_update_callback)
 
     def init_widgets(self):
         self.version_hint = widgets.StatusIcon(self)

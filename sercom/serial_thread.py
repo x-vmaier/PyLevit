@@ -1,6 +1,6 @@
 import time
 import threading
-import sercom.packet as pkt
+import sercom.fastprotoc as pkt
 from event_bus import EventBus
 
 

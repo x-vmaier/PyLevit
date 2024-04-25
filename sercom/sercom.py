@@ -1,7 +1,7 @@
 import queue
 import serial
 from sercom.serial_thread import SerialReaderThread
-import sercom.packet as packet
+import sercom.fastprotoc as fastprotoc
 from event_bus import EventBus
 
 
@@ -27,7 +27,7 @@ class Serial:
             self.baud = baud
             self.serial = serial.Serial(port=port, baudrate=baud)
             await self.start(self.serial)
-            self.event_bus.publish(packet.CONNECTION_UPDATE, True)
+            self.event_bus.publish(fastprotoc.CONNECTION_UPDATE, True)
             print(f'Connected to {self.port}, {self.baud} bps')
         except serial.SerialException as e:
             print(f'Error opening port {port}. Is it in use?')
@@ -46,7 +46,7 @@ class Serial:
                 await self.stop()
                 self.serial.close()
                 self.serial = None
-                self.event_bus.publish(packet.CONNECTION_UPDATE, False)
+                self.event_bus.publish(fastprotoc.CONNECTION_UPDATE, False)
             except Exception as e:
                 print('An error occurred while disconnecting from the serial port.')
                 raise e

@@ -3,9 +3,9 @@ import tkinter
 import customtkinter
 from frames.base_frame import BaseFrame
 from event_bus import EventBus
-import sercom.packet
+import sercom.fastprotoc
 import widgets
-import sercom.packet as packet
+import sercom.fastprotoc as fastprotoc
 import sercom
 
 
@@ -28,10 +28,10 @@ class SettingsFrame(BaseFrame):
         self.init_widgets()
         self.set_defaults()
 
-        self.event_bus.subscribe(packet.SETPOINT_UPDATE, self.update_callback('setpoint'))
-        self.event_bus.subscribe(packet.KP_UPDATE, self.update_callback('kp'))
-        self.event_bus.subscribe(packet.KI_UPDATE, self.update_callback('ki'))
-        self.event_bus.subscribe(packet.KD_UPDATE, self.update_callback('kd'))
+        self.event_bus.subscribe(fastprotoc.SETPOINT_UPDATE, self.update_callback('setpoint'))
+        self.event_bus.subscribe(fastprotoc.KP_UPDATE, self.update_callback('kp'))
+        self.event_bus.subscribe(fastprotoc.KI_UPDATE, self.update_callback('ki'))
+        self.event_bus.subscribe(fastprotoc.KD_UPDATE, self.update_callback('kd'))
 
     def init_widgets(self):
         self.frame_title = customtkinter.CTkLabel(self, text="Settings", font=customtkinter.CTkFont(size=18, weight="bold"))
@@ -68,7 +68,7 @@ class SettingsFrame(BaseFrame):
             if event:
                 value = self.get_current_value(key)
                 if self.realtime_switch.get():
-                    asyncio.run(packet.send(self.serial, getattr(packet, f'{key.upper()}_UPDATE'), value))
+                    asyncio.run(fastprotoc.send(self.serial, getattr(fastprotoc, f'{key.upper()}_UPDATE'), value))
                 else:
                     self.apply_button.configure(state="normal")
             elif data is not None:
@@ -80,7 +80,7 @@ class SettingsFrame(BaseFrame):
         def callback(event=None):
             value = self.get_current_value(key)
             if self.realtime_switch.get():
-                asyncio.run(packet.send(self.serial, getattr(packet, f'{key.upper()}_UPDATE'), value))
+                asyncio.run(fastprotoc.send(self.serial, getattr(fastprotoc, f'{key.upper()}_UPDATE'), value))
             elif self.serial.is_connected():
                 self.apply_button.configure(state="normal")
         return callback
@@ -106,7 +106,7 @@ class SettingsFrame(BaseFrame):
         for key in self.prev_values:
             current_value = self.get_current_value(key)
             if current_value != self.prev_values[key]:
-                asyncio.run(packet.send(self.serial, getattr(packet, f'{key.upper()}_UPDATE'), current_value))
+                asyncio.run(fastprotoc.send(self.serial, getattr(fastprotoc, f'{key.upper()}_UPDATE'), current_value))
                 self.prev_values[key] = current_value
         self.apply_button.configure(state="disabled")
 
