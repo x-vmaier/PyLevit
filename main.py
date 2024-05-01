@@ -10,14 +10,14 @@ WINDOW_WIDTH = 1100
 WINDOW_HEIGHT = 580
 MAJOR = 0
 MINOR = 2
-PATCH = 2
+PATCH = 4
 
 
 class App(customtkinter.CTk):
     """Main application class."""
     def __init__(self):
         super().__init__()
-        self.serial = sercom.Serial()
+        self.sercom = sercom.Sercom()
         self.event_bus = EventBus()
         self.m_config = Config()
 
@@ -56,7 +56,7 @@ class App(customtkinter.CTk):
         self.status_frame.grid(row=2, column=1, columnspan=2, padx=10, pady=(5, 10), sticky="nsew")
 
     def on_close(self):
-        asyncio.run(self.serial.disconnect())
+        asyncio.run(self.sercom.disconnect())
         self.event_bus.publish("WM_DELETE_WINDOW")
         self.after(1100, self.destroy())
 
