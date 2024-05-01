@@ -11,7 +11,7 @@ class SidebarFrame(BaseFrame):
     def __init__(self, master, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
 
-        self.serial = sercom.Serial()
+        self.sercom = sercom.Sercom()
         self.event_bus = EventBus()
         self.config = Config()
 
@@ -82,11 +82,10 @@ class SidebarFrame(BaseFrame):
         customtkinter.set_widget_scaling(new_scaling_float)
         self.config.set_config("scaling", new_scaling)
 
-    def serial_option_menu_callback(self, event):
+    def serial_option_menu_callback(self, selected_port):
         """Change text to connect or disconnect based on the serial connection"""
-        selected_port = self.serial_option_menu.get()
-        connect_button_text = "Disconnect" if selected_port == self.serial.port else "Connect"
-        baud_option_menu_state = "disabled" if selected_port == self.serial.port else "normal"
+        connect_button_text = "Disconnect" if selected_port == self.sercom.get_port() else "Connect"
+        baud_option_menu_state = "disabled" if selected_port == self.sercom.get_port() else "normal"
 
         self.connect_button.configure(text=connect_button_text)
         self.baud_option_menu.configure(state=baud_option_menu_state)
@@ -110,7 +109,7 @@ class SidebarFrame(BaseFrame):
             self.serial_option_menu.configure(values=self.available_ports)
 
         if self.serial_option_menu.get() not in self.available_ports:
-            asyncio.run(self.serial.disconnect())
+            asyncio.run(self.sercom.disconnect())
             self.serial_option_menu.set(self.available_ports[0])
 
     def connect_to_port(self):
@@ -124,12 +123,12 @@ class SidebarFrame(BaseFrame):
             baud = self.baud_option_menu.get()
 
             try:
-                asyncio.run(self.serial.connect(port, baud))
+                asyncio.run(self.sercom.connect(port, baud))
                 self.baud_option_menu.configure(state="disabled")
                 self.connect_button.configure(text="Disconnect")
             except Exception as e:
                 print(f"Failed to connect: {e}")
         elif self.connect_button.cget("text") == "Disconnect":
-            asyncio.run(self.serial.disconnect())
+            asyncio.run(self.sercom.disconnect())
             self.connect_button.configure(text="Connect")
             self.baud_option_menu.configure(state="normal")
