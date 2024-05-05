@@ -1,9 +1,9 @@
 import tkinter
-from frames.base_frame import BaseFrame
-import sercom.fastprotoc as fastprotoc
-from event_bus import EventBus
-from config import Config
 import widgets
+from config import Config
+from event_bus import EventBus, Event
+from frames.base_frame import BaseFrame
+import sercom.fastprotoc as pkt
 
 
 class StatusBarFrame(BaseFrame):
@@ -13,18 +13,15 @@ class StatusBarFrame(BaseFrame):
         self.event_bus = EventBus()
         self.m_config = Config()
 
-        self.version = self.m_config.get_version()
+        self.version = self.m_config.get("version")
         self.connection_state = tkinter.BooleanVar()
-        self.connection_state_dict = {
-            True: "Connected",
-            False: "Disconnected"
-        }
 
         self.grid_columnconfigure(1, weight=1)
         self.init_widgets()
         self.set_defaults()
 
-        self.event_bus.subscribe(fastprotoc.CONNECTION_UPDATE, self.connection_state_update_callback)
+        self.event_bus.subscribe(Event.SERIAL_OPENED.value, self.serial_opened_callback)
+        self.event_bus.subscribe(Event.SERIAL_CLOSED.value, self.serial_closed_callback)
 
     def init_widgets(self):
         self.version_hint = widgets.StatusIcon(self)
@@ -37,5 +34,10 @@ class StatusBarFrame(BaseFrame):
         text = "Version {}".format(self.version)
         self.version_hint.configure(text=text)
 
-    def connection_state_update_callback(self, data):
-        self.connection_hint.configure(text=self.connection_state_dict[data])
+    def serial_opened_callback(self, event_data=None):
+        """Callback function for serial connect event."""
+        self.connection_hint.configure(text="Connected")
+
+    def serial_closed_callback(self, event_data=None):
+        """Callback function for serial disconnect event."""
+        self.connection_hint.configure(text="Disconnected")

@@ -66,7 +66,7 @@ class FloatSpinbox(BaseFrame):
         self.continuous_action = False
 
     def subtract_button_callback(self):
-        """Callback for subtract button."""
+        """Callback function for subtract button click event."""
         try:
             value = float(self.entry.get()) - self.step_size
             self.update_value(value)
@@ -76,7 +76,7 @@ class FloatSpinbox(BaseFrame):
             pass
 
     def add_button_callback(self):
-        """Callback for add button."""
+        """Callback function for add button click event."""
         try:
             value = float(self.entry.get()) + self.step_size
             self.update_value(value)
@@ -86,7 +86,7 @@ class FloatSpinbox(BaseFrame):
             pass
 
     def return_pressed_callback(self, event):
-        """Callback for Return key press."""
+        """Callback function for Return key press event."""
         try:
             value = float(self.entry.get())
             self.update_value(value)

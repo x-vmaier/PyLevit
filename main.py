@@ -1,16 +1,17 @@
 import asyncio
 import customtkinter
-from event_bus import EventBus
-from config import Config
 import frames
+from config import Config
+from event_bus import EventBus
 import sercom
+
 
 TITLE = "PyLevit"
 WINDOW_WIDTH = 1100
 WINDOW_HEIGHT = 580
-MAJOR = 0
-MINOR = 2
-PATCH = 4
+MAJOR = 1
+MINOR = 0
+PATCH = 0
 
 
 class App(customtkinter.CTk):
@@ -21,7 +22,7 @@ class App(customtkinter.CTk):
         self.event_bus = EventBus()
         self.m_config = Config()
 
-        self.m_config.set_config("version", f"{MAJOR}.{MINOR}.{PATCH}")
+        self.m_config.set("version", value=f"{MAJOR}.{MINOR}.{PATCH}")
         self.initialize_interface()
 
     def initialize_interface(self):
@@ -48,8 +49,8 @@ class App(customtkinter.CTk):
     def create_frames(self):
         self.sidebar_frame = frames.SidebarFrame(self, width=140, corner_radius=0)
         self.sidebar_frame.grid(row=0, column=0, rowspan=3, sticky="nsew")
-        self.chart_frame = frames.ChartFrame(self, fg_color="white")
-        self.chart_frame.grid(row=0, column=1, padx=(10, 5), pady=(10, 5), sticky="nsew")
+        self.plot_frame = frames.PlotFrame(self, fg_color="white")
+        self.plot_frame.grid(row=0, column=1, padx=(10, 5), pady=(10, 5), sticky="nsew")
         self.settings_frame = frames.SettingsFrame(self)
         self.settings_frame.grid(row=0, column=2, rowspan=2, padx=(5, 10), pady=(10, 5), sticky="nsew")
         self.status_frame = frames.StatusBarFrame(self)

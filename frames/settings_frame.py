@@ -1,22 +1,25 @@
-import asyncio
-import tkinter
 import customtkinter
-from frames.base_frame import BaseFrame
-from event_bus import EventBus
-import sercom.fastprotoc
+import queue
+import tkinter
 import widgets
-import sercom.fastprotoc as fastprotoc
 import sercom
+from sercom.fastprotoc import PacketType
+from event_bus import EventBus, Event
+from frames.base_frame import BaseFrame
 
 
 class SettingsFrame(BaseFrame):
     def __init__(self, master, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
 
-        self.serial = sercom.Serial()
+        self.sercom = sercom.Sercom()
         self.event_bus = EventBus()
 
         self.realtime_enabled = tkinter.BooleanVar()
+        self.setpoint_queue = queue.Queue()
+        self.kp_queue = queue.Queue()
+        self.ki_queue = queue.Queue()
+        self.kd_queue = queue.Queue()
         self.prev_values = {
             'setpoint': None,
             'kp': None,
@@ -28,10 +31,16 @@ class SettingsFrame(BaseFrame):
         self.init_widgets()
         self.set_defaults()
 
-        self.event_bus.subscribe(fastprotoc.SETPOINT_UPDATE, self.update_callback('setpoint'))
-        self.event_bus.subscribe(fastprotoc.KP_UPDATE, self.update_callback('kp'))
-        self.event_bus.subscribe(fastprotoc.KI_UPDATE, self.update_callback('ki'))
-        self.event_bus.subscribe(fastprotoc.KD_UPDATE, self.update_callback('kd'))
+        self.sercom.add_setter_queue(PacketType.SETPOINT_UPDATE.value, self.setpoint_queue)
+        self.sercom.add_setter_queue(PacketType.KP_UPDATE.value, self.kp_queue)
+        self.sercom.add_setter_queue(PacketType.KI_UPDATE.value, self.ki_queue)
+        self.sercom.add_setter_queue(PacketType.KD_UPDATE.value, self.kd_queue)
+
+        self.event_bus.subscribe(Event.SERIAL_CLOSED.value, self.set_defaults)
+        self.event_bus.subscribe(PacketType.SETPOINT_UPDATE.value, lambda event_data: self.update_callback('setpoint')(event_data))
+        self.event_bus.subscribe(PacketType.KP_UPDATE.value, lambda event_data: self.update_callback('kp')(event_data))
+        self.event_bus.subscribe(PacketType.KI_UPDATE.value, lambda event_data: self.update_callback('ki')(event_data))
+        self.event_bus.subscribe(PacketType.KD_UPDATE.value, lambda event_data: self.update_callback('kd')(event_data))
 
     def init_widgets(self):
         self.frame_title = customtkinter.CTkLabel(self, text="Settings", font=customtkinter.CTkFont(size=18, weight="bold"))
@@ -59,29 +68,38 @@ class SettingsFrame(BaseFrame):
         self.save_button.grid(row=7, column=1, padx=(5, 10), pady=10)
 
     def set_defaults(self):
+        self.setpoint_spinbox.set(0)
+        self.kp_spinbox.set(0)
+        self.ki_spinbox.set(0)
+        self.kd_spinbox.set(0)
+
         for key in self.prev_values:
             self.prev_values[key] = self.get_current_value(key)
 
+    def realtime_apply_callback(self):
+        "Callback function for realtime checkbox click event."
+        if self.realtime_enabled.get():
+            self.apply_button.configure(state="disabled")
+        elif self.sercom.is_connected():
+            changes_detected = any(self.get_current_value(key) != self.prev_values[key] for key in self.prev_values)
+            if changes_detected:
+                self.apply_button.configure(state="normal")
+
     def update_callback(self, key):
-        """Create update callback function for a specific key."""
-        def callback(event=None, data=None):
-            if event:
-                value = self.get_current_value(key)
-                if self.realtime_switch.get():
-                    asyncio.run(fastprotoc.send(self.serial, getattr(fastprotoc, f'{key.upper()}_UPDATE'), value))
-                else:
-                    self.apply_button.configure(state="normal")
-            elif data is not None:
-                self.set_current_value(key, data)
+        """Callback function for a specific key."""
+        def callback(event_data=None):
+            if event_data is not None:
+                self.set_current_value(key, event_data)
         return callback
 
     def update_gui(self, key):
-        """Create GUI update function for a specific key."""
-        def callback(event=None):
+        """Callback function for a specific key (GUI)."""
+        def callback():
             value = self.get_current_value(key)
-            if self.realtime_switch.get():
-                asyncio.run(fastprotoc.send(self.serial, getattr(fastprotoc, f'{key.upper()}_UPDATE'), value))
-            elif self.serial.is_connected():
+            queue = getattr(self, f'{key}_queue')
+            if self.realtime_switch.get() and queue is not None:
+                queue.put(value)
+            elif self.sercom.is_connected():
                 self.apply_button.configure(state="normal")
         return callback
 
@@ -92,21 +110,16 @@ class SettingsFrame(BaseFrame):
     def set_current_value(self, key, value):
         """Set the current value of a setting."""
         getattr(self, f'{key}_spinbox').set(value)
-
-    def realtime_apply_callback(self):
-        if self.realtime_enabled.get():
-            self.apply_button.configure(state="disabled")
-        elif self.serial.is_connected():
-            changes_detected = any(self.get_current_value(key) != self.prev_values[key] for key in self.prev_values)
-            if changes_detected:
-                self.apply_button.configure(state="normal")
+        self.prev_values[key] = self.get_current_value(key)
 
     def apply_changes(self):
         """Apply the changes."""
         for key in self.prev_values:
             current_value = self.get_current_value(key)
             if current_value != self.prev_values[key]:
-                asyncio.run(fastprotoc.send(self.serial, getattr(fastprotoc, f'{key.upper()}_UPDATE'), current_value))
+                queue = getattr(self, f'{key}_queue')
+                if queue is not None:
+                    queue.put(current_value)
                 self.prev_values[key] = current_value
         self.apply_button.configure(state="disabled")
 

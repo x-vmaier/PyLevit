@@ -1,47 +1,52 @@
 import queue
+
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from scipy.interpolate import interp1d
-from frames.base_frame import BaseFrame
-from event_bus import EventBus
-import sercom.fastprotoc as fastprotoc
-from config import Config
+
 import sercom
+from sercom.fastprotoc import PacketType
+from config import Config
+from event_bus import EventBus, Event
+from frames.base_frame import BaseFrame
 
 
-class ChartFrame(BaseFrame):
+class PlotFrame(BaseFrame):
     def __init__(self, master, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
 
-        self.serial = sercom.Serial()
+        self.sercom = sercom.Sercom()
         self.event_bus = EventBus()
-        self.config = Config()
+        self.m_config = Config()
 
         self.after_ids = []
         self.hall_queue = queue.Queue()
         self.pwm_queue = queue.Queue()
-        self.serial.add_data_queue(fastprotoc.HALL_UPDATE, self.hall_queue)
-        self.serial.add_data_queue(fastprotoc.PWM_UPDATE, self.pwm_queue)
+        self.sercom.add_getter_queue(PacketType.HALL_UPDATE.value, self.hall_queue)
+        self.sercom.add_getter_queue(PacketType.PWM_UPDATE.value, self.pwm_queue)
 
         self.padding = 25
         self.prev_padding_value = 0
         self.max_data_points = 250
-        self.scroll_threshold = 5
+        self.scroll_threshold = self.max_data_points / 50
+
         self.setpoint = 0
         self.x_hall_data = []
-        self.x_pwm_data = []
-        self.y_setpoint_data = []
         self.y_hall_data = []
+        self.y_setpoint_data = []
+        self.x_pwm_data = []
         self.y_pwm_data = []
 
         self.master = master
         self.init_widgets()
         self.set_defaults()
 
-        self.event_bus.subscribe(fastprotoc.SETPOINT_UPDATE, self.setpoint_update_callback)
+        self.event_bus.subscribe(Event.SERIAL_OPENED.value, self.start_plotting)
+        self.event_bus.subscribe(Event.SERIAL_CLOSED.value, self.stop_plotting)
+        self.event_bus.subscribe(PacketType.SETPOINT_UPDATE.value, self.setpoint_update_callback)
         self.event_bus.subscribe("WM_DELETE_WINDOW", self.window_close_callback)
-        self.after_ids.append(self.after(100, self.update_chart_from_queue))
 
     def init_widgets(self):
         self.fig, (self.ax1, self.ax2) = plt.subplots(2, 1, figsize=(9, 9), gridspec_kw={'height_ratios': [2, 1]}, constrained_layout=True)
@@ -68,18 +73,28 @@ class ChartFrame(BaseFrame):
     def set_defaults(self):
         pass
 
-    def window_close_callback(self):
+    def window_close_callback(self, event_data=None):
+        """Callback function for window close event."""
         for after_id in self.after_ids:
             self.after_cancel(after_id)
 
-    def setpoint_update_callback(self, data):
-        self.setpoint = data
+    def setpoint_update_callback(self, event_data=None):
+        """Callback function for update setpoint event."""
+        self.setpoint = event_data
 
-    def update_chart_from_queue(self):
-        """Update chart from data queue."""
+    def start_plotting(self, event_data=None):
+        self.ani = animation.FuncAnimation(self.fig, self.update_plot, interval=5, cache_frame_data=False, blit=True)
+
+    def stop_plotting(self, event_data=None):
+        for after_id in self.after_ids:
+            self.after_cancel(after_id)
+
+        self.ani.event_source.stop()
+
+    def update_plot(self, frame):
+        """Update plot from data queue."""
         while not self.hall_queue.empty():
             new_x, new_y = self.hall_queue.get()
-
             self.x_hall_data.append(new_x)
             self.y_hall_data.append(new_y)
             self.y_setpoint_data.append(self.setpoint)
@@ -94,9 +109,13 @@ class ChartFrame(BaseFrame):
 
         while not self.pwm_queue.empty():
             new_x, new_y = self.pwm_queue.get()
-
             self.x_pwm_data.append(new_x)
-            self.y_pwm_data.append(new_y)
+
+            prev_y = self.y_pwm_data[-1] if len(self.y_pwm_data) > 0 else None
+            if prev_y is not None and (new_y > 0 and new_y < 255):
+                self.y_pwm_data.append(255)
+            else:
+                self.y_pwm_data.append(new_y)
 
             if len(self.x_pwm_data) > self.max_data_points:
                 self.x_pwm_data = self.x_pwm_data[-self.max_data_points:]
@@ -105,7 +124,7 @@ class ChartFrame(BaseFrame):
             if new_x > self.scroll_threshold:
                 self.ax2.set_xlim(new_x - self.scroll_threshold, new_x)
 
-        if len(self.x_hall_data) < 4:  # Check if there's enough data for cubic spline interpolation
+        if len(self.x_hall_data) < 4:
             self.hall_line.set_data([], [])
             self.setpoint_line.set_data([], [])
         else:
@@ -124,7 +143,10 @@ class ChartFrame(BaseFrame):
 
             self.hall_line.set_data(x_interp, y_interp)
             self.setpoint_line.set_data(self.x_hall_data, self.y_setpoint_data)
-            self.pwm_line.set_data(self.x_pwm_data, self.y_pwm_data)
+            pwm_step = np.array(self.y_pwm_data[:-1])
+            pwm_step = np.repeat(pwm_step, 5)
+            pwm_step = np.insert(pwm_step, 0, pwm_step[0])
+            self.x_pwm_step = np.linspace(min(self.x_pwm_data), max(self.x_pwm_data), len(pwm_step))
+            self.pwm_line.set_data(self.x_pwm_step, pwm_step)
 
-        self.canvas.draw()
-        self.after(20, self.update_chart_from_queue)
+        return self.hall_line, self.setpoint_line, self.pwm_line

@@ -1,9 +1,10 @@
 import asyncio
 import customtkinter
-from frames.base_frame import BaseFrame
-from event_bus import EventBus
-from config import Config
 import sercom
+from config import Config
+from cache import PersistentCache
+from event_bus import EventBus, Event
+from frames.base_frame import BaseFrame
 
 
 class SidebarFrame(BaseFrame):
@@ -13,10 +14,11 @@ class SidebarFrame(BaseFrame):
 
         self.sercom = sercom.Sercom()
         self.event_bus = EventBus()
-        self.config = Config()
+        self.cache = PersistentCache()
+        self.m_config = Config()
 
         self.after_ids = []
-        self.available_ports = []
+        self.available_ports = ["None"]
         self.baudrates = ["115200", "9600"]
         self.appearance_modes = ["Light", "Dark", "System"]
         self.ui_scalings = ["80%", "90%", "100%", "110%", "120%"]
@@ -26,6 +28,8 @@ class SidebarFrame(BaseFrame):
         self.set_defaults()
         self.get_available_ports()
 
+        self.event_bus.subscribe(Event.SERIAL_OPENED.value, self.serial_opened_callback)
+        self.event_bus.subscribe(Event.SERIAL_CLOSED.value, self.serial_closed_callback)
         self.event_bus.subscribe("WM_DELETE_WINDOW", self.window_close_callback)
 
     def init_widgets(self):
@@ -57,38 +61,53 @@ class SidebarFrame(BaseFrame):
         self.scaling_optionemenu.grid(row=9, column=0, padx=20, pady=(10, 20))
 
     def set_defaults(self):
-        appearance_mode = self.config.get_config("appearance_mode")
-        scaling = self.config.get_config("scaling")
+        appearance_mode = self.m_config.get("appearance_mode")
+        scaling = self.m_config.get("scaling")
         scaling_float = int(scaling.replace("%", "")) / 100
+        prev_com = self.cache.get('prev_com')
 
         self.appearance_mode_optionemenu.set(appearance_mode)
         self.scaling_optionemenu.set(scaling)
+
+        if prev_com is not None:
+            self.serial_option_menu.set(prev_com)
 
         customtkinter.set_appearance_mode(appearance_mode)
         customtkinter.set_widget_scaling(scaling_float)
 
     def window_close_callback(self):
+        """Callback function for window close event."""
         for after_id in self.after_ids:
             self.after_cancel(after_id)
 
     def appearance_mode_callback(self, new_appearance_mode: str):
-        """Change appearance mode event handler."""
+        """Callback function for appearance mode change event."""
         customtkinter.set_appearance_mode(new_appearance_mode)
-        self.config.set_config("appearance_mode", new_appearance_mode)
+        self.m_config.set("appearance_mode", new_appearance_mode)
 
     def scaling_callback(self, new_scaling: str):
-        """Change scaling event handler."""
+        """Callback function for scaling change event."""
         new_scaling_float = int(new_scaling.replace("%", "")) / 100
         customtkinter.set_widget_scaling(new_scaling_float)
-        self.config.set_config("scaling", new_scaling)
+        self.m_config.set("scaling", new_scaling)
 
-    def serial_option_menu_callback(self, selected_port):
-        """Change text to connect or disconnect based on the serial connection"""
-        connect_button_text = "Disconnect" if selected_port == self.sercom.get_port() else "Connect"
-        baud_option_menu_state = "disabled" if selected_port == self.sercom.get_port() else "normal"
+    def serial_option_menu_callback(self, port):
+        """Callback function for serial port select event."""
+        connect_button_text = "Disconnect" if port == self.sercom.get_port() else "Connect"
+        baud_option_menu_state = "disabled" if port == self.sercom.get_port() else "normal"
 
         self.connect_button.configure(text=connect_button_text)
         self.baud_option_menu.configure(state=baud_option_menu_state)
+
+    def serial_opened_callback(self, event_data=None):
+        """Callback function for serial connect event."""
+        self.baud_option_menu.configure(state="disabled")
+        self.connect_button.configure(text="Disconnect")
+
+    def serial_closed_callback(self, event_data=None):
+        """Callback function for serial disconnect event."""
+        self.connect_button.configure(text="Connect")
+        self.baud_option_menu.configure(state="normal")
 
     def get_available_ports(self):
         """Get available serial ports."""
@@ -114,21 +133,16 @@ class SidebarFrame(BaseFrame):
 
     def connect_to_port(self):
         """Connect to serial port."""
-        selected_port = self.serial_option_menu.get()
-        if selected_port == "None":
+        port = self.serial_option_menu.get()
+        baud = self.baud_option_menu.get()
+        if port == "None":
             return
 
         if self.connect_button.cget("text") == "Connect":
-            port = selected_port
-            baud = self.baud_option_menu.get()
-
             try:
+                self.cache.set('prev_com', port)
                 asyncio.run(self.sercom.connect(port, baud))
-                self.baud_option_menu.configure(state="disabled")
-                self.connect_button.configure(text="Disconnect")
             except Exception as e:
                 print(f"Failed to connect: {e}")
         elif self.connect_button.cget("text") == "Disconnect":
             asyncio.run(self.sercom.disconnect())
-            self.connect_button.configure(text="Connect")
-            self.baud_option_menu.configure(state="normal")

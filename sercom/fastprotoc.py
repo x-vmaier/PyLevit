@@ -1,12 +1,15 @@
 import struct
+from enum import Enum, auto
 
-CONNECTION_UPDATE = 0
-SETPOINT_UPDATE = 1
-KP_UPDATE = 2
-KI_UPDATE = 3
-KD_UPDATE = 4
-HALL_UPDATE = 5
-PWM_UPDATE = 6
+
+class PacketType(Enum):
+    WRONG_DEVICE = -1
+    SETPOINT_UPDATE = 0
+    KP_UPDATE = 1
+    KI_UPDATE = 2
+    KD_UPDATE = 3
+    HALL_UPDATE = 4
+    PWM_UPDATE = 5
 
 PACKET_FORMAT = '<BBBfB'
 START_DELIMITER = b'{'
@@ -25,17 +28,10 @@ def decode_packet(packet):
         print(f"Error occurred while decoding packet: {e}")
         return None, None
 
-async def send(serial, identifier, data):
+def send(serial, identifier, data):
     """Send packet to serial port."""
     try:
-        if serial is None or not serial.is_connected():
-            raise Exception("Serial port is not open.")
-        
-        while serial.in_waiting > 0:
-            continue
-        
-        print("Sending {}".format(identifier))
-        packet = struct.pack(PACKET_FORMAT, ord(START_DELIMITER), identifier, data, ord(END_DELIMITER))
+        packet = struct.pack(PACKET_FORMAT, ord(START_DELIMITER), identifier, ord(SEPARATOR), data, ord(END_DELIMITER))
         serial.write(packet)
     except Exception as e:
         print(f"Error occurred while sending packet: {e}")
@@ -43,6 +39,9 @@ async def send(serial, identifier, data):
 def receive(serial):
     """Receive packet from serial port."""
     try:
+        if not serial.inWaiting():
+            return PacketType.WRONG_DEVICE.value, None
+
         start_delimiter = serial.read()
         if start_delimiter != START_DELIMITER:
             return None, None

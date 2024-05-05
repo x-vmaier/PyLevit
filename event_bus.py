@@ -1,3 +1,9 @@
+from enum import Enum, auto
+
+class Event(Enum):
+    SERIAL_OPENED = 50
+    SERIAL_CLOSED = 51
+
 class EventBus:
     _instance = None
 
@@ -8,18 +14,21 @@ class EventBus:
         return cls._instance
     
     def subscribe(self, event_type, callback):
+        """Subscribe to an event."""
         if event_type not in self.subscribers:
             self.subscribers[event_type] = []
         self.subscribers[event_type].append(callback)
 
     def unsubscribe(self, event_type, callback):
+        """Unsubscribe from an event."""
         if event_type in self.subscribers:
             self.subscribers[event_type].remove(callback)
 
-    def publish(self, event_type, data=None):
+    def publish(self, event_type, event_data=None):
+        """Publish an event."""
         if event_type in self.subscribers:
             for callback in self.subscribers[event_type]:
-                if data is not None:
-                    callback(data=data)
-                else:
-                    callback()
+                try:
+                    callback(event_data) if event_data is not None else callback()
+                except Exception as e:
+                    print(f"Error occurred while executing callback for {event_type}: {e}")

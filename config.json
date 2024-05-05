@@ -1,5 +1,9 @@
 {
-    "version": "0.2.2",
+    "version": "1.0.0",
     "appearance_mode": "Light",
-    "scaling": "100%"
+    "scaling": "100%",
+    "serial": {
+        "timeout_threshold": 1500,
+        "packet_loss_threshold": 10
+    }
 }

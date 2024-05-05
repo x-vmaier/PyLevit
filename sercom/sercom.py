@@ -1,11 +1,10 @@
-import queue
 import serial
+from event_bus import EventBus, Event
+import sercom.fastprotoc as pkt
 from sercom.serial_thread import SerialReaderThread
-import sercom.fastprotoc as fastprotoc
-from event_bus import EventBus
 
 
-class Serial:
+class Sercom:
     _instance = None
 
     def __new__(cls):
@@ -16,7 +15,8 @@ class Serial:
             cls._instance.baud = None
             cls._instance.serial = None
             cls._instance.serial_thread = None
-            cls._instance.data_queues = {}
+            cls._instance.setter_queues = {}
+            cls._instance.getter_queues = {}
         return cls._instance
 
     async def connect(self, port: str, baud: int):
@@ -25,10 +25,9 @@ class Serial:
             await self.disconnect()
             self.port = port
             self.baud = baud
-            self.serial = serial.Serial(port=port, baudrate=baud)
+            self.serial = serial.Serial(port=port, baudrate=baud, timeout=0.1)
             await self.start(self.serial)
-            self.event_bus.publish(fastprotoc.CONNECTION_UPDATE, True)
-            print(f'Connected to {self.port}, {self.baud} bps')
+            self.event_bus.publish(Event.SERIAL_OPENED.value)
         except serial.SerialException as e:
             print(f'Error opening port {port}. Is it in use?')
             raise e
@@ -45,8 +44,10 @@ class Serial:
             try:
                 await self.stop()
                 self.serial.close()
+                self.port = None
+                self.baud = None
                 self.serial = None
-                self.event_bus.publish(fastprotoc.CONNECTION_UPDATE, False)
+                self.event_bus.publish(Event.SERIAL_CLOSED.value)
             except Exception as e:
                 print('An error occurred while disconnecting from the serial port.')
                 raise e
@@ -57,7 +58,7 @@ class Serial:
         serial.flushInput()
 
         try:
-            self.serial_thread = SerialReaderThread(serial, self.data_queues)
+            self.serial_thread = SerialReaderThread(serial, self.setter_queues, self.getter_queues)
             self.serial_thread.start()
         except Exception as e:
             print('Failed to start reader thread')
@@ -72,11 +73,23 @@ class Serial:
         except Exception as e:
             print('Failed to stop previous reader thread')
             raise e
+        
+    def add_setter_queue(self, identifier, setter_queue):
+        """Add setter queue"""
+        self.setter_queues[identifier] = setter_queue
 
-    def add_data_queue(self, identifier: int, data_queue: queue.Queue):
-        """Add data queue with format (time, data)"""
-        self.data_queues[identifier] = data_queue
+    def add_getter_queue(self, identifier, getter_queue):
+        """Add getter queue with format (time, data)"""
+        self.getter_queues[identifier] = getter_queue
 
     def is_connected(self):
         """Check if the serial connection is open."""
         return self.serial is not None and self.serial.is_open
+    
+    def get_serial(self):
+        """Get the serial object."""
+        return self.serial
+    
+    def get_port(self):
+        """Get the name of the serial port."""
+        return self.port
