@@ -1,5 +1,5 @@
 from enum import Enum, auto
-from frames.status_bar_frame import StatusBarFrame
+from event_bus import EventBus, Event
 
 
 class LogLevel(Enum):
@@ -14,6 +14,7 @@ class Logger:
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
+            cls._instance.event_bus = EventBus()
             cls._instance.DEBUG_COLORS = {
                 LogLevel.INFO: "green",
                 LogLevel.WARNING: "yellow",
@@ -22,4 +23,5 @@ class Logger:
         return cls._instance
     
     def log(self, message, log_level):
-        StatusBarFrame().set_debug_label(message, self.DEBUG_COLORS.get(log_level))
+        color = self.DEBUG_COLORS.get(log_level)
+        self.event_bus.publish(Event.LOGGER_EVENT, (message, color))
