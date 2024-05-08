@@ -49,22 +49,22 @@ class PlotFrame(BaseFrame):
         self.event_bus.subscribe("WM_DELETE_WINDOW", self.window_close_callback)
 
     def init_widgets(self):
-        self.fig, (self.ax1, self.ax2) = plt.subplots(2, 1, figsize=(9, 9), gridspec_kw={'height_ratios': [2, 1]}, constrained_layout=True)
+        self.fig, (self.ax1, self.ax2) = plt.subplots(2, 1, figsize=(9, 9), gridspec_kw={"height_ratios": [2, 1]}, constrained_layout=True)
 
         self.hall_line, = self.ax1.plot([], [], lw=2)
-        self.setpoint_line, = self.ax1.plot([], [], lw=2, linestyle='--', color="red")
-        self.ax1.set_xlabel('Time', fontsize=12)
-        self.ax1.set_ylabel('Value', fontsize=12)
-        self.ax1.tick_params(axis='both', which='major', labelsize=10)
-        self.ax1.grid(True, linestyle='--', alpha=0.7)
-        self.ax1.set_title('Hall-Sensor Output', fontsize=14, fontweight='bold')
+        self.setpoint_line, = self.ax1.plot([], [], lw=2, linestyle="--", color="red")
+        self.ax1.set_xlabel("Time", fontsize=12)
+        self.ax1.set_ylabel("Value", fontsize=12)
+        self.ax1.tick_params(axis="both", which="major", labelsize=10)
+        self.ax1.grid(True, linestyle="--", alpha=0.7)
+        self.ax1.set_title("Hall-Sensor Output", fontsize=14, fontweight="bold")
 
         self.pwm_line, = self.ax2.plot([], [], lw=1)
-        self.ax2.set_xlabel('X Label', fontsize=12)
-        self.ax2.set_ylabel('Y Label', fontsize=12)
-        self.ax2.tick_params(axis='both', which='major', labelsize=10)
-        self.ax2.grid(True, linestyle='--', alpha=0.7)
-        self.ax2.set_title('PWM Signal', fontsize=14, fontweight='bold')
+        self.ax2.set_xlabel("X Label", fontsize=12)
+        self.ax2.set_ylabel("Y Label", fontsize=12)
+        self.ax2.tick_params(axis="both", which="major", labelsize=10)
+        self.ax2.grid(True, linestyle="--", alpha=0.7)
+        self.ax2.set_title("PWM Signal", fontsize=14, fontweight="bold")
         self.ax2.set_ylim(-45, 300)
 
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.master)
@@ -128,7 +128,7 @@ class PlotFrame(BaseFrame):
             self.hall_line.set_data([], [])
             self.setpoint_line.set_data([], [])
         else:
-            f_interp = interp1d(self.x_hall_data, self.y_hall_data, kind='cubic')
+            f_interp = interp1d(self.x_hall_data, self.y_hall_data, kind="cubic")
             x_interp = np.linspace(min(self.x_hall_data), max(self.x_hall_data), 1000)
             y_interp = f_interp(x_interp)
 

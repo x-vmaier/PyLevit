@@ -3,7 +3,7 @@
     "appearance_mode": "Light",
     "scaling": "100%",
     "serial": {
-        "timeout_threshold": 1500,
+        "timeout_threshold": 15000,
         "packet_loss_threshold": 10
     }
 }

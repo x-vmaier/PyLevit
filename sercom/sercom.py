@@ -29,10 +29,10 @@ class Sercom:
             await self.start(self.serial)
             self.event_bus.publish(Event.SERIAL_OPENED.value)
         except serial.SerialException as e:
-            print(f'Error opening port {port}. Is it in use?')
+            print(f"Error opening port {port}. Is it in use?")
             raise e
         except Exception as e:
-            print('An error occurred while connecting to the serial port.')
+            print("An error occurred while connecting to the serial port.")
             raise e
     
     async def disconnect(self):
@@ -49,7 +49,7 @@ class Sercom:
                 self.serial = None
                 self.event_bus.publish(Event.SERIAL_CLOSED.value)
             except Exception as e:
-                print('An error occurred while disconnecting from the serial port.')
+                print("An error occurred while disconnecting from the serial port.")
                 raise e
 
     async def start(self, serial: serial.Serial):
@@ -61,7 +61,7 @@ class Sercom:
             self.serial_thread = SerialReaderThread(serial, self.setter_queues, self.getter_queues)
             self.serial_thread.start()
         except Exception as e:
-            print('Failed to start reader thread')
+            print("Failed to start reader thread")
             raise e
 
     async def stop(self):
@@ -71,7 +71,7 @@ class Sercom:
                 self.serial_thread.stop()
                 self.serial_thread.join()
         except Exception as e:
-            print('Failed to stop previous reader thread')
+            print("Failed to stop previous reader thread")
             raise e
         
     def add_setter_queue(self, identifier, setter_queue):

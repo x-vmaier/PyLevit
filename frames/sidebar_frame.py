@@ -62,9 +62,9 @@ class SidebarFrame(BaseFrame):
 
     def set_defaults(self):
         appearance_mode = self.m_config.get("appearance_mode")
-        scaling = self.m_config.get("scaling")
+        scaling = str(self.m_config.get("scaling"))
         scaling_float = int(scaling.replace("%", "")) / 100
-        prev_com = self.cache.get('prev_com')
+        prev_com = self.cache.get("prev_com")
 
         self.appearance_mode_optionemenu.set(appearance_mode)
         self.scaling_optionemenu.set(scaling)
@@ -140,7 +140,7 @@ class SidebarFrame(BaseFrame):
 
         if self.connect_button.cget("text") == "Connect":
             try:
-                self.cache.set('prev_com', port)
+                self.cache.set("prev_com", port)
                 asyncio.run(self.sercom.connect(port, baud))
             except Exception as e:
                 print(f"Failed to connect: {e}")

@@ -8,13 +8,13 @@ class Config:
         """Create a new instance of Config class if it doesn't exist."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance.config_file = 'config.json'
+            cls._instance.config_file = "config.json"
         return cls._instance
 
     def _load_config(self):
         """Load configuration data from the config file."""
         try:
-            with open(self.config_file, 'r') as f:
+            with open(self.config_file, "r") as f:
                 return json.load(f)
         except FileNotFoundError:
             print("Config file not found.")
@@ -27,7 +27,7 @@ class Config:
     def _save_config(self, config_data):
         """Save configuration data to the config file."""
         try:
-            with open(self.config_file, 'w') as f:
+            with open(self.config_file, "w") as f:
                 json.dump(config_data, f, indent=4)
         except PermissionError:
             print("Permission denied. Cannot write to config file.")

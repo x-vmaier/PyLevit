@@ -21,10 +21,10 @@ class SettingsFrame(BaseFrame):
         self.ki_queue = queue.Queue()
         self.kd_queue = queue.Queue()
         self.prev_values = {
-            'setpoint': None,
-            'kp': None,
-            'ki': None,
-            'kd': None
+            "setpoint": None,
+            "kp": None,
+            "ki": None,
+            "kd": None
         }
 
         self.grid_rowconfigure(5, weight=1)
@@ -37,25 +37,25 @@ class SettingsFrame(BaseFrame):
         self.sercom.add_setter_queue(PacketType.KD_UPDATE.value, self.kd_queue)
 
         self.event_bus.subscribe(Event.SERIAL_CLOSED.value, self.set_defaults)
-        self.event_bus.subscribe(PacketType.SETPOINT_UPDATE.value, lambda event_data: self.update_callback('setpoint')(event_data))
-        self.event_bus.subscribe(PacketType.KP_UPDATE.value, lambda event_data: self.update_callback('kp')(event_data))
-        self.event_bus.subscribe(PacketType.KI_UPDATE.value, lambda event_data: self.update_callback('ki')(event_data))
-        self.event_bus.subscribe(PacketType.KD_UPDATE.value, lambda event_data: self.update_callback('kd')(event_data))
+        self.event_bus.subscribe(PacketType.SETPOINT_UPDATE.value, lambda event_data: self.update_callback("setpoint")(event_data))
+        self.event_bus.subscribe(PacketType.KP_UPDATE.value, lambda event_data: self.update_callback("kp")(event_data))
+        self.event_bus.subscribe(PacketType.KI_UPDATE.value, lambda event_data: self.update_callback("ki")(event_data))
+        self.event_bus.subscribe(PacketType.KD_UPDATE.value, lambda event_data: self.update_callback("kd")(event_data))
 
     def init_widgets(self):
         self.frame_title = customtkinter.CTkLabel(self, text="Settings", font=customtkinter.CTkFont(size=18, weight="bold"))
         self.frame_title.grid(row=0, column=0, columnspan=2, padx=20, pady=(20, 10))
 
-        self.setpoint_spinbox = widgets.FloatSpinbox(self, text="Setpoint:", width=130, command=self.update_gui('setpoint'))
+        self.setpoint_spinbox = widgets.FloatSpinbox(self, text="Setpoint:", width=130, command=self.update_gui("setpoint"))
         self.setpoint_spinbox.grid(row=1, column=0, columnspan=2, padx=10, pady=10)
 
-        self.kp_spinbox = widgets.FloatSpinbox(self, text="Kp:", width=130, command=self.update_gui('kp'))
+        self.kp_spinbox = widgets.FloatSpinbox(self, text="Kp:", width=130, command=self.update_gui("kp"))
         self.kp_spinbox.grid(row=2, column=0, columnspan=2, padx=10, pady=10)
 
-        self.ki_spinbox = widgets.FloatSpinbox(self, text="Ki:", width=130, command=self.update_gui('ki'))
+        self.ki_spinbox = widgets.FloatSpinbox(self, text="Ki:", width=130, command=self.update_gui("ki"))
         self.ki_spinbox.grid(row=3, column=0, columnspan=2, padx=10, pady=10)
 
-        self.kd_spinbox = widgets.FloatSpinbox(self, text="Kd:",  width=130, command=self.update_gui('kd'))
+        self.kd_spinbox = widgets.FloatSpinbox(self, text="Kd:",  width=130, command=self.update_gui("kd"))
         self.kd_spinbox.grid(row=4, column=0, columnspan=2, padx=10, pady=10)
 
         self.realtime_switch = customtkinter.CTkCheckBox(master=self, text="Apply in Realtime", variable=self.realtime_enabled, command=self.realtime_apply_callback)
@@ -96,7 +96,7 @@ class SettingsFrame(BaseFrame):
         """Callback function for a specific key (GUI)."""
         def callback():
             value = self.get_current_value(key)
-            queue = getattr(self, f'{key}_queue')
+            queue = getattr(self, f"{key}_queue")
             if self.realtime_switch.get() and queue is not None:
                 queue.put(value)
             elif self.sercom.is_connected():
@@ -105,11 +105,11 @@ class SettingsFrame(BaseFrame):
 
     def get_current_value(self, key):
         """Get the current value of a setting."""
-        return getattr(self, f'{key}_spinbox').get()
+        return getattr(self, f"{key}_spinbox").get()
 
     def set_current_value(self, key, value):
         """Set the current value of a setting."""
-        getattr(self, f'{key}_spinbox').set(value)
+        getattr(self, f"{key}_spinbox").set(value)
         self.prev_values[key] = self.get_current_value(key)
 
     def apply_changes(self):
@@ -117,7 +117,7 @@ class SettingsFrame(BaseFrame):
         for key in self.prev_values:
             current_value = self.get_current_value(key)
             if current_value != self.prev_values[key]:
-                queue = getattr(self, f'{key}_queue')
+                queue = getattr(self, f"{key}_queue")
                 if queue is not None:
                     queue.put(current_value)
                 self.prev_values[key] = current_value

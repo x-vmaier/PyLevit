@@ -75,7 +75,7 @@ class SerialReaderThread(threading.Thread):
         try:
             while not self.stopped():
                 if self.serial is None or not self.serial.is_open:
-                    raise Exception('Serial closed before reader has been properly closed.')
+                    raise Exception("Serial closed before reader has been properly closed.")
 
                 self.process_setter_queues()
 
@@ -84,5 +84,5 @@ class SerialReaderThread(threading.Thread):
 
                 time.sleep(0.001)
         except Exception as e:
-            print('An error occurred while running the serial reader thread')
+            print("An error occurred while running the serial reader thread")
             raise e

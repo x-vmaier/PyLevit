@@ -11,10 +11,10 @@ class PacketType(Enum):
     HALL_UPDATE = 4
     PWM_UPDATE = 5
 
-PACKET_FORMAT = '<BBBfB'
-START_DELIMITER = b'{'
-END_DELIMITER = b'}'
-SEPARATOR = b':'
+PACKET_FORMAT = "<BBBfB"
+START_DELIMITER = b"{"
+END_DELIMITER = b"}"
+SEPARATOR = b":"
 
 def decode_packet(packet):
     """Decode packet from byte string."""

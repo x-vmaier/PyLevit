@@ -20,7 +20,7 @@ class StatusIcon(customtkinter.CTkButton):
             compound="right",
             width=18,
             height=18,
-            fg_color='transparent',
+            fg_color="transparent",
             hover=False,
             text_color="gray",
             *args,
