@@ -6,7 +6,6 @@ from event_bus import EventBus
 import sercom
 import version as v
 
-
 TITLE = "PyLevit"
 WINDOW_WIDTH = 1100
 WINDOW_HEIGHT = 580
@@ -57,7 +56,7 @@ class App(customtkinter.CTk):
     def on_close(self):
         asyncio.run(self.sercom.disconnect())
         self.event_bus.publish("WM_DELETE_WINDOW")
-        self.after(1100, self.destroy())
+        self.after(1200, self.destroy())
 
 
 if __name__ == "__main__":
