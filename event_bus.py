@@ -1,8 +1,11 @@
-from enum import Enum, auto
+from enum import Enum
+
 
 class Event(Enum):
     SERIAL_OPENED = 50
     SERIAL_CLOSED = 51
+    LOGGER_EVENT = 52
+
 
 class EventBus:
     _instance = None

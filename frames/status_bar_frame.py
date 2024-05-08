@@ -1,9 +1,9 @@
 import tkinter
+import customtkinter
 import widgets
 from config import Config
 from event_bus import EventBus, Event
 from frames.base_frame import BaseFrame
-import sercom.fastprotoc as pkt
 
 
 class StatusBarFrame(BaseFrame):
@@ -22,10 +22,14 @@ class StatusBarFrame(BaseFrame):
 
         self.event_bus.subscribe(Event.SERIAL_OPENED.value, self.serial_opened_callback)
         self.event_bus.subscribe(Event.SERIAL_CLOSED.value, self.serial_closed_callback)
+        self.event_bus.subscribe(Event.LOGGER_EVENT.value, self.logger_event_callback)
 
     def init_widgets(self):
         self.version_hint = widgets.StatusIcon(self)
         self.version_hint.grid(row=0, column=0, padx=(10, 0), pady=(5, 5), sticky="nsew")
+
+        self.debug_output = customtkinter.CTkLabel(self, compound="right", width=18, height=20)
+        self.debug_output.grid(row=0, column=1, padx=(20, 0), pady=(5, 5), sticky="nsw")
         
         self.connection_hint = widgets.StatusIcon(self, image_light="img/signal-light.png", image_dark="img/signal-dark.png", text="Disconnected")
         self.connection_hint.grid(row=0, column=2, padx=(10, 0), pady=(5, 5), sticky="nsew")
@@ -41,3 +45,8 @@ class StatusBarFrame(BaseFrame):
     def serial_closed_callback(self, event_data=None):
         """Callback function for serial disconnect event."""
         self.connection_hint.configure(text="Disconnected")
+
+    def logger_event_callback(self, event_data):
+        """Callback function for updating the debug output label"""
+        text, color = event_data
+        self.debug_output.configure(text=text, fg=color)
