@@ -37,6 +37,7 @@ class StatusBarFrame(BaseFrame):
     def set_defaults(self):
         text = "Version {}".format(self.version)
         self.version_hint.configure(text=text)
+        self.debug_output.configure(text="")
 
     def serial_opened_callback(self, event_data=None):
         """Callback function for serial connect event."""
@@ -49,4 +50,4 @@ class StatusBarFrame(BaseFrame):
     def logger_event_callback(self, event_data):
         """Callback function for updating the debug output label"""
         text, color = event_data
-        self.debug_output.configure(text=text, fg=color)
+        self.debug_output.configure(text=text, text_color=color)
