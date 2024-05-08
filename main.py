@@ -4,14 +4,12 @@ import frames
 from config import Config
 from event_bus import EventBus
 import sercom
+import version as v
 
 
 TITLE = "PyLevit"
 WINDOW_WIDTH = 1100
 WINDOW_HEIGHT = 580
-MAJOR = 1
-MINOR = 0
-PATCH = 0
 
 
 class App(customtkinter.CTk):
@@ -22,7 +20,7 @@ class App(customtkinter.CTk):
         self.event_bus = EventBus()
         self.m_config = Config()
 
-        self.m_config.set("version", value=f"{MAJOR}.{MINOR}.{PATCH}")
+        self.m_config.set("version", value=f"{v.MAJOR}.{v.MINOR}.{v.PATCH}")
         self.initialize_interface()
 
     def initialize_interface(self):
