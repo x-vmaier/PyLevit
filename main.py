@@ -3,6 +3,7 @@ import customtkinter
 import frames
 from config import Config
 from event_bus import EventBus
+from logger import Logger, FileSink, ConsoleSink, LogLevel
 import sercom
 import version as v
 
@@ -18,16 +19,26 @@ class App(customtkinter.CTk):
         self.sercom = sercom.Sercom()
         self.event_bus = EventBus()
         self.m_config = Config()
+        self.logger = Logger()
 
         self.m_config.set("version", value=f"{v.MAJOR}.{v.MINOR}.{v.PATCH}")
         self.initialize_interface()
+        self.logger.log(LogLevel.INFO, "Successfully started PyLevit")
 
     def initialize_interface(self):
         self.title(TITLE)
         self.protocol("WM_DELETE_WINDOW", self.on_close)
+        self.initialize_logger()
         self.center_window(WINDOW_WIDTH, WINDOW_HEIGHT)
         self.configure_layout()
         self.create_frames()
+
+    def initialize_logger(self):
+        console_sink = ConsoleSink()
+        self.logger.add_sink(console_sink)
+
+        file_sink = FileSink()
+        self.logger.add_sink(file_sink)
 
     def center_window(self, width, height):
         screen_width = self.winfo_screenwidth()
