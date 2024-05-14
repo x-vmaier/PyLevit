@@ -17,6 +17,8 @@ PyLevit is a Python application designed to interface with an Arduino-based elec
 
 PyLevit serves as the front-end interface for interacting with an Arduino-based electromagnet levitator system. It facilitates real-time control of system parameters such as setpoint, proportional gain, integral gain, and derivative gain, while also providing visual feedback through plots and status indicators.
 
+This project relies on the Arduino code from the [Levitator repository](https://github.com/x-vmaier/Levitator) for integrating the levitator system with the graphical user interface.
+
 ## Requirements
 
 To run PyLevit, you need:
@@ -53,5 +55,3 @@ To run PyLevit, you need:
 ## License
 
 This code is licensed under the [MIT License](LICENSE). Feel free to use, modify, or distribute it according to the terms of the license.
-
-For more details, refer to the [PyLevit repository](https://github.com/x-vmaier/PyLevit) for integrating the levitator system with the graphical user interface.
